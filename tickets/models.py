@@ -130,6 +130,7 @@ class TicketEvent(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="ticket_events",
     )
     event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES)
@@ -139,7 +140,7 @@ class TicketEvent(models.Model):
 
     class Meta:
         ordering = ["created_at"]
-        indexed = [
+        indexes = [
             models.Index(
                 fields=["ticket", "created_at"], name="event_ticket_created_idx"
             )
