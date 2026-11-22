@@ -22,11 +22,13 @@ class CustomUserAdmin(BaseUserAdmin):
         ("Dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
-        None,
-        {
-            "classes": ("wide",),
-            "fields": ("email", "first_name", "role", "password1", "password2"),
-        },
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "first_name", "role", "password1", "password2"),
+            },
+        ),
     )
 
     search_fields = ["first_name", "last_name", "email", "role"]
