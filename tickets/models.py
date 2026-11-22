@@ -4,7 +4,7 @@ from django.db import models
 from core.models import TimeStampedModel
 
 
-class Ticket(models.Model, TimeStampedModel):
+class Ticket(TimeStampedModel):
     # category choices
     BILLING = "billing"
     TECHNICAL = "technical"
@@ -85,7 +85,7 @@ class Ticket(models.Model, TimeStampedModel):
         return self.reference or self.title
 
 
-class Comment(models.Model, TimeStampedModel):
+class Comment(TimeStampedModel):
     ticket = models.ForeignKey(
         Ticket, on_delete=models.CASCADE, related_name="comments"
     )
