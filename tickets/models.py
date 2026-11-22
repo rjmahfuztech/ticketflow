@@ -4,7 +4,7 @@ from django.db import models
 from core.models import TimeStampedModel
 
 
-class Ticket(TimeStampedModel):
+class Ticket(models.Model, TimeStampedModel):
     # category choices
     BILLING = "billing"
     TECHNICAL = "technical"
@@ -83,3 +83,67 @@ class Ticket(TimeStampedModel):
 
     def __str__(self):
         return self.reference or self.title
+
+
+class Comment(models.Model, TimeStampedModel):
+    ticket = models.ForeignKey(
+        Ticket, on_delete=models.CASCADE, related_name="comments"
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="comments"
+    )
+    body = models.TextField()
+    is_internal = models.BooleanField(default=False)  # only true for agent and admin
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(
+                fields=["ticket", "created_at"], name="comment_ticket_created_idx"
+            )
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.author_id} on ticket {self.ticket_id}"
+
+
+class TicketEvent(models.Model):
+    # event types
+    CREATED = "created"
+    ASSIGNED = "assigned"
+    STATUS_CHANGED = "status_changed"
+    PRIORITY_CHANGED = "priority_changed"
+    COMMENT_ADDED = "comment_added"
+    ATTACHMENT_ADDED = "attachment_added"
+
+    EVENT_TYPE_CHOICES = [
+        (CREATED, "Created"),
+        (ASSIGNED, "Assigned"),
+        (STATUS_CHANGED, "Status changed"),
+        (PRIORITY_CHANGED, "Priority changed"),
+        (COMMENT_ADDED, "Comment added"),
+        (ATTACHMENT_ADDED, "Attachment added"),
+    ]
+
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="events")
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="ticket_events",
+    )
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES)
+    from_value = models.CharField(max_length=50, blank=True)
+    to_value = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexed = [
+            models.Index(
+                fields=["ticket", "created_at"], name="event_ticket_created_idx"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.event_type} on ticket {self.ticket_id}"
