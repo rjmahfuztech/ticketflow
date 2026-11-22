@@ -6,10 +6,10 @@ from core.models import TimeStampedModel
 
 class Ticket(TimeStampedModel):
     # category choices
-    BILLING = "B"
-    TECHNICAL = "T"
-    ACCOUNT = "A"
-    OTHER = "O"
+    BILLING = "billing"
+    TECHNICAL = "technical"
+    ACCOUNT = "account"
+    OTHER = "other"
 
     CATEGORY_CHOICES = [
         (BILLING, "Billing"),
@@ -19,10 +19,10 @@ class Ticket(TimeStampedModel):
     ]
 
     # priority choices
-    LOW = "L"
-    MEDIUM = "M"
-    HIGH = "H"
-    URGENT = "U"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
 
     PRIORITY_CHOICES = [
         (LOW, "Low"),
@@ -32,10 +32,10 @@ class Ticket(TimeStampedModel):
     ]
 
     # status choices
-    OPEN = ("O",)
-    IN_PROGRESS = "P"
-    RESOLVED = "R"
-    CLOSED = "C"
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
 
     STATUS_CHOICES = [
         (OPEN, "Open"),
@@ -44,12 +44,14 @@ class Ticket(TimeStampedModel):
         (CLOSED, "Closed"),
     ]
 
-    reference = models.CharField(max_length=20, unique=True, blank=True, editable=False)
+    reference = models.CharField(
+        max_length=20, unique=True, null=True, blank=True, editable=False
+    )
     title = models.CharField(max_length=200)
     description = models.TextField()
-    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES, default=OTHER)
-    priority = models.CharField(max_length=1, choices=PRIORITY_CHOICES, default=MEDIUM)
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=OPEN)
+    category = models.CharField(max_length=12, choices=CATEGORY_CHOICES, default=OTHER)
+    priority = models.CharField(max_length=12, choices=PRIORITY_CHOICES, default=MEDIUM)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=OPEN)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -64,3 +66,20 @@ class Ticket(TimeStampedModel):
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["status", "priority"], name="ticket_status_priority_idx"
+            ),
+            models.Index(
+                fields=["assigned_to", "status"], name="ticket_assignee_status_idx"
+            ),
+            models.Index(
+                fields=["created_by", "status"], name="ticket_creator_status_idx"
+            ),
+        ]
+
+    def __str__(self):
+        return self.reference or self.title
